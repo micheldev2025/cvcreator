@@ -1,12 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { FileText, Menu, X } from 'lucide-react';
+import { FileText, Menu, X, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      // Update UI notify the user they can add to home screen
+      setShowInstallBtn(true);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      setShowInstallBtn(false);
+      setDeferredPrompt(null);
+      console.log('PWA was installed');
+    });
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    // Show the prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    // We've used the prompt, and can't use it again, throw it away
+    setDeferredPrompt(null);
+    setShowInstallBtn(false);
+  };
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -40,6 +71,16 @@ const Navbar: React.FC = () => {
                 {link.name}
               </Link>
             ))}
+            
+            {showInstallBtn && (
+              <button 
+                onClick={handleInstallClick}
+                className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold bg-neutral-100 px-3 py-2 hover:bg-black hover:text-white transition-all"
+              >
+                <Download size={12} /> Instalar App
+              </button>
+            )}
+
             <Link to="/criar" className="btn-elegant py-2 px-4">
               Começar
             </Link>
@@ -77,6 +118,19 @@ const Navbar: React.FC = () => {
                   {link.name}
                 </Link>
               ))}
+
+              {showInstallBtn && (
+                <button 
+                  onClick={() => {
+                    handleInstallClick();
+                    setIsOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 text-xs uppercase tracking-widest font-bold bg-neutral-100 py-3 mb-2"
+                >
+                  <Download size={14} /> Instalar Aplicativo
+                </button>
+              )}
+
               <Link
                 to="/criar"
                 onClick={() => setIsOpen(false)}
