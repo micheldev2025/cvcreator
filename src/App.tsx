@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 
 // Components
 import Navbar from './components/Navbar';
@@ -72,6 +73,7 @@ export default function App() {
     <ResumeProvider>
       <Router>
         <AppContent />
+        <Analytics />
       </Router>
     </ResumeProvider>
   );
